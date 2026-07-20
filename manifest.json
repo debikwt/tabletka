@@ -1,0 +1,16 @@
+{
+  "name": "Таблетка",
+  "short_name": "Таблетка",
+  "description": "Напоминания о приёме лекарств",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f0f8ff",
+  "theme_color": "#2c7a7b",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/512/pill.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
