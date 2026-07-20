@@ -58,13 +58,7 @@
   </div>
 
   <script>
-    // Безопасное чтение данных
-    let data;
-    try {
-      data = JSON.parse(localStorage.getItem('tabletka')) || { diseases: [], pills: [], history: [] };
-    } catch {
-      data = { diseases: [], pills: [], history: [] };
-    }
+    let data = JSON.parse(localStorage.getItem('tabletka')) || { diseases: [], pills: [], history: [] };
     let currentTheme = localStorage.getItem('theme') || 'light';
 
     function saveData() {
@@ -92,7 +86,6 @@
       const name = document.getElementById('pillName').value.trim();
       const dosage = document.getElementById('dosage').value.trim();
       const time = document.getElementById('time').value;
-      if (!diseaseId) return alert('Выберите болезнь!');
       if (!name  !dosage  !time) return alert('Заполните все поля!');
       data.pills.push({ id: Date.now(), diseaseId, name, dosage, time, taken: false });
       saveData();
@@ -104,12 +97,7 @@
       const pill = data.pills.find(p => p.id === id);
       if (pill && !pill.taken) {
         pill.taken = true;
-        // Сохраняем название болезни в истории
-        const disease = data.diseases.find(d => d.id === pill.diseaseId);data.history.unshift({ 
-          ...pill, 
-          diseaseName: disease ? disease.name : '',
-          date: new Date().toLocaleString('ru-RU') 
-        });
+        data.history.unshift({ ...pill, date: new Date().toLocaleString('ru-RU') });
         saveData();
       }
     }
@@ -121,8 +109,7 @@
       }
     }
 
-    function renderAll() {
-      const select = document.getElementById('diseaseSelect');
+    function renderAll() {const select = document.getElementById('diseaseSelect');
       select.innerHTML = '<option value="">Выберите болезнь</option>';
       data.diseases.forEach(d => {
         const opt = document.createElement('option');
@@ -172,12 +159,8 @@
       document.getElementById('tab2').style.display = n === 2 ? 'block' : 'none';
     }
 
-    // Безопасная проверка Notification
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
     if (currentTheme === 'dark') document.body.classList.add('dark');
+    if (Notification.permission === "default") Notification.requestPermission();
     setInterval(renderAll, 30000);
     renderAll();
   </script>
