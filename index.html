@@ -236,7 +236,7 @@ function checkPillTime() {
                 // --- 📩 ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ БРАУЗЕРА ---
                 if ("Notification" in window && Notification.permission === "granted") {
                     new Notification('🚨 ПОРА ПРИНЯТЬ ЛЕКАРСТВО!', {
-                        body: 'Таблетка: ' pill.name + ' (' + pill.dosage + ')',
+                        body: 'Таблетка: ' + pill.name + ' (' + pill.dosage + ')',
                         requireInteraction: true // Уведомление не исчезнет, пока не нажмёшь на него
                     });
                 }
