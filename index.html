@@ -203,10 +203,7 @@
     }
 
     renderAll();
-  </script>
-</body>
-</html>
-// 1. Запрашиваем разрешение на уведомления при загрузке
+    // 1. Запрашиваем разрешение на уведомления при загрузке
 if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission();
 }
@@ -256,3 +253,6 @@ function checkPillTime() {
 
 // Проверяем время каждые 3 секунды (3000 мс), чтобы точно не пропустить минуту
 setInterval(checkPillTime, 3000);
+  </script>
+</body>
+</html>
