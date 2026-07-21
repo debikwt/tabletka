@@ -105,7 +105,7 @@
       const dosage = document.getElementById('dosage').value.trim();
       const time = document.getElementById('time').value;
 
-      if (!name  !dosage  !time) {
+      if (!name || !dosage || !time) {
         return alert('Заполните название, дозировку и время!');
       }
 
