@@ -13,7 +13,7 @@
     h1 { text-align: center; color: var(--primary); margin: 10px 0 20px; }
     .card { background: white; padding: 15px; margin: 12px 0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     body.dark .card { background: #2d3748; }
-    input, select, button { padding: 12px; margin: 6px 0; width: 100%; border-radius: 8px; border: 1px solid #ccc; }
+    input, select, button { padding: 12px; margin: 6px 0; width: 100%; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
     body.dark input, body.dark select { background: #4a5568; color: white; border-color: #718096; }
     button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
     button:hover { opacity: 0.9; }
@@ -35,7 +35,9 @@
   <div id="tab0">
     <div class="card">
       <h3>➕ Добавить лекарство</h3>
-      <select id="diseaseSelect"></select>
+      <select id="diseaseSelect">
+        <option value="">Выберите болезнь (необязательно)</option>
+      </select>
       <input type="text" id="pillName" placeholder="Название таблетки">
       <input type="text" id="dosage" placeholder="Дозировка">
       <input type="time" id="time" value="08:00">
@@ -58,7 +60,19 @@
   </div>
 
   <script>
-    let data = JSON.parse(localStorage.getItem('tabletka')) || { diseases: [], pills: [], history: [] };
+    // Безопасное чтение localStorage
+    let data;
+    try {
+      data = JSON.parse(localStorage.getItem('tabletka')) || { diseases: [], pills: [], history: [] };
+    } catch(e) {
+      data = { diseases: [], pills: [], history: [] };
+    }
+    
+    // Проверка целостности структуры
+    if (!data.diseases) data.diseases = [];
+    if (!data.pills) data.pills = [];
+    if (!data.history) data.history = [];
+
     let currentTheme = localStorage.getItem('theme') || 'light';
 
     function saveData() {
@@ -73,23 +87,30 @@
     }
 
     function addDisease() {
-      const name = document.getElementById('disease').value.trim();
+      const input = document.getElementById('disease');
+      const name = input.value.trim();
       if (name) {
         data.diseases.push({ id: Date.now(), name });
         saveData();
-        document.getElementById('disease').value = '';
+        input.value = '';
+      } else {
+        alert('Введите название болезни!');
       }
     }
 
     function addPill() {
-      const diseaseId = parseInt(document.getElementById('diseaseSelect').value);
+      const diseaseSelect = document.getElementById('diseaseSelect');
+      const diseaseId = diseaseSelect.value ? parseInt(diseaseSelect.value) : null;
       const name = document.getElementById('pillName').value.trim();
       const dosage = document.getElementById('dosage').value.trim();
       const time = document.getElementById('time').value;
-      if (!name  !dosage  !time) return alert('Заполните все поля!');
+
+      if (!name  !dosage  !time) {
+        return alert('Заполните название, дозировку и время!');
+      }
+
       data.pills.push({ id: Date.now(), diseaseId, name, dosage, time, taken: false });
-      saveData();
-      document.getElementById('pillName').value = '';
+      saveData();document.getElementById('pillName').value = '';
       document.getElementById('dosage').value = '';
     }
 
@@ -109,8 +130,10 @@
       }
     }
 
-    function renderAll() {const select = document.getElementById('diseaseSelect');
-      select.innerHTML = '<option value="">Выберите болезнь</option>';
+    function renderAll() {
+      // Селектор болезней
+      const select = document.getElementById('diseaseSelect');
+      select.innerHTML = '<option value="">Выберите болезнь (необязательно)</option>';
       data.diseases.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.id;
@@ -118,39 +141,54 @@
         select.appendChild(opt);
       });
 
+      // Список "Сегодня"
       const todayList = document.getElementById('todayList');
       todayList.innerHTML = '<h3>Сегодня</h3>';
-      data.pills.forEach(pill => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <strong>${pill.time}</strong> — ${pill.name} (${pill.dosage})<br>
-          <button onclick="markTaken(${pill.id})" ${pill.taken ? 'disabled' : ''} class="${pill.taken ? 'taken' : ''}">
-            ${pill.taken ? '✅ Принято' : 'Принял'}
-          </button>
-          <button onclick="deletePill(${pill.id})" class="delete" style="margin-left: 10px;">Удалить</button>
-        `;
-        todayList.appendChild(div);
-      });
+      if (data.pills.length === 0) {
+        todayList.innerHTML += '<p style="color: #718096;">Список лекарств пуст</p>';
+      } else {
+        data.pills.forEach(pill => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <strong>${pill.time}</strong> — ${pill.name} (${pill.dosage})<br><br>
+            <button onclick="markTaken(${pill.id})" ${pill.taken ? 'disabled' : ''} class="${pill.taken ? 'taken' : ''}">
+              ${pill.taken ? '✅ Принято' : 'Принял'}
+            </button>
+            <button onclick="deletePill(${pill.id})" class="delete" style="margin-top: 5px;">Удалить</button>
+          `;
+          todayList.appendChild(div);
+        });
+      }
 
+      // Список "Все лекарства"
       const allPills = document.getElementById('allPills');
       allPills.innerHTML = '<h3>Все лекарства</h3>';
-      data.pills.forEach(pill => {
-        const d = data.diseases.find(dis => dis.id === pill.diseaseId);
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = ${pill.time} — <b>${pill.name}</b> (${pill.dosage}) <small>(${d ? d.name : ''})</small>;
-        allPills.appendChild(div);
-      });
+      if (data.pills.length === 0) {
+        allPills.innerHTML += '<p style="color: #718096;">Нет добавленных лекарств</p>';
+      } else {
+        data.pills.forEach(pill => {
+          const d = data.diseases.find(dis => dis.id === pill.diseaseId);
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = ${pill.time} — <b>${pill.name}</b> (${pill.dosage}) <small>(${d ? d.name : 'Без категории'})</small>;
+          allPills.appendChild(div);
+        });
+      }
 
+      // История
       const historyList = document.getElementById('historyList');
       historyList.innerHTML = '<h3>История приёмов</h3>';
-      data.history.forEach(h => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = <small>${h.date}</small><br><b>${h.name}</b> — ${h.dosage};
-        historyList.appendChild(div);
-      });
+      if (data.history.length === 0) {
+        historyList.innerHTML += '<p style="color: #718096;">История пока пуста</p>';
+      } else {
+        data.history.forEach(h => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = <small>${h.date}</small><br><b>${h.name}</b> — ${h.dosage};
+          historyList.appendChild(div);
+        });
+      }
     }
 
     function showTab(n) {
@@ -160,8 +198,10 @@
     }
 
     if (currentTheme === 'dark') document.body.classList.add('dark');
-    if (Notification.permission === "default") Notification.requestPermission();
-    setInterval(renderAll, 30000);
+    if (typeof Notification !== 'undefined' && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
     renderAll();
   </script>
 </body>
