@@ -171,7 +171,7 @@
           const d = data.diseases.find(dis => dis.id === pill.diseaseId);
           const div = document.createElement('div');
           div.className = 'card';
-          div.innerHTML = ${pill.time} — <b>${pill.name}</b> (${pill.dosage}) <small>(${d ? d.name : 'Без категории'})</small>;
+         div.innerHTML = '${pill.time} - <b>${pill.name}</b> (${pill.dosage}) <small>(${d ? d.name : 'Без категории'})</small>';
           allPills.appendChild(div);
         });
       }
