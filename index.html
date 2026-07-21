@@ -206,3 +206,53 @@
   </script>
 </body>
 </html>
+// 1. Запрашиваем разрешение на уведомления при загрузке
+if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+}
+
+// 2. Создаём аудио-сигнал (звук пиканья/будильника)
+const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+
+// Флаг, чтобы не спамить бесконечно в одну и ту же секунду
+let lastTriggeredTime = '';
+
+function checkPillTime() {
+    const now = new Date();
+    // Формат HH:MM (например, "14:30")
+    const currentTime = now.toTimeString().substring(0, 5);
+
+    // Проверяем каждую таблетку
+    data.pills.forEach(pill => {
+        if (pill.time === currentTime && !pill.taken) {
+            
+            // Если в эту минуту мы ещё не сигналили
+            if (lastTriggeredTime !== currentTime + '_' + pill.id) {
+                lastTriggeredTime = currentTime + '_' + pill.id;
+
+                // --- 🔊 ЗВУК ---
+                // Воспроизводим звук 3 раза подряд для громкости
+                alarmSound.play().catch(e => {
+                    console.log("Кликните по странице, чтобы разблокировать звук!");
+                });
+
+                // --- 📩 ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ БРАУЗЕРА ---
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification('🚨 ПОРА ПРИНЯТЬ ЛЕКАРСТВО!', {
+                        body: Таблетка: ${pill.name} (${pill.dosage}),
+                        requireInteraction: true // Уведомление не исчезнет, пока не нажмёшь на него
+                    });
+                }
+
+                // --- ⚠️ СПАМ-ОКНО (ALERT) ---
+                // Alert блокирует страницу и точно привлечёт внимание!
+                setTimeout(() => {
+                    alert(`⏰ ВНИМАНИЕ!\n\nПора принять лекарство: ${pill.name} (${pill.dosage})`);
+                }, 100);
+            }
+        }
+    });
+}
+
+// Проверяем время каждые 3 секунды (3000 мс), чтобы точно не пропустить минуту
+setInterval(checkPillTime, 3000);
